@@ -2,7 +2,11 @@ import random
 import time
 import math
 
-money = 50
+money = 500 #remember to change this
+total_egg_hatched = 0
+userhatchspeedlevel = 0
+hatchspeedlevel = 1
+hatchspeed = 1
 print(f'Welcome to the egg hatching simulator, you start with {money} dollars!')
 pets = []
 autodelete_list = []
@@ -11,15 +15,13 @@ COMMONEGG_WEIGHT = [50,30,10,5,3,2]
 
 UNCOMMONEGG_OUTCOMES = ['Rabbit', 'Wolf','Bloodhound', 'Red Panda', 'Rubicon']
 UNCOMMONEGG_WEIGHT = [40,32,16,11.999,0.001]
-total_egg_hatched = 0
 
-userhatchspeedlevel = 0
-hatchspeedlevel = 1
-hatchspeed = 1
+DIAMONDEGG_OUTCOMES = ['Diamond Dog','Diamond Rabbit','Diamond Bunny','Diamond Wolf','Diamond Hex','Diamond Dogcat','Diamond Prism','Diamond Ring','Apex Diamond']
+DIAMONDEGG_WEIGHT = [26,25,25,23.8389,0.1,0.05,0.01,0.001,0.0001]
 
-COMMONPET_PAYMENT = [3,4,8,16,32,64]
-UNCOMMONPET_PAYMENT = [11,12,20,50,100000]
-
+COMMONPET_PAYMENT = [1,3,6,12,24,64]
+UNCOMMONPET_PAYMENT = [9,11,16,36,100000]
+DIAMONDEGG_PAYMENT = [53,53,55,56,9000,10000,10000,40000, 50000000 ]
 def loops():
         global money
         global total_egg_hatched
@@ -33,32 +35,45 @@ def loops():
         print('5. Adoption')
         print('6. Add Pet to Auto-Delete')
         print('7. Remove Pet from Auto-Delete')
+        print('8. Quit')
         gameinput = input('Which of the following would you like to do! ')
         print('')
         if gameinput == '1':
             print('1. Common egg (Cost: 2)')
             print('2. Uncommon egg (Cost: 10)')
+            print('3. Diamond egg (Cost: 100)')
             egginput = input('Which egg would you like to hatch? ')
-            if egginput == '1':
+            if egginput == '1' and money >= 2 :
                 amountofeggshatched = int(input(f'How many eggs would you like to hatch? Your Hatch speed is {hatchspeed}, and you have {money} dollars! '))
                 total_egg_hatched += amountofeggshatched
                 while amountofeggshatched > 0:
                     commonegg()
                     time.sleep(hatchspeed)
                     amountofeggshatched -= 1
-            elif egginput == '2':
+            else:
+                print('You did not have enough money to hatch!')
+            if egginput == '2':
                 amountofeggshatched = int(input(f'How many eggs would you like to hatch? Your Hatch speed is {hatchspeed}, and you have {money} dollars! '))
                 total_egg_hatched += amountofeggshatched
                 while amountofeggshatched > 0:
                     uncommonegg()
                     time.sleep(hatchspeed)
                     amountofeggshatched -= 1
+            if egginput == '3' and money >= 100:
+                amountofegghatched = int(input(f'How many eggs would you like to hatch? Your Hatch speed is {hatchspeed}, and you have {money} dollars! '))
+                total_egg_hatched += amountofegghatched
+                while amountofegghatched > 0:
+                    diamondegg()
+                    time.sleep(hatchspeed)
+                    amountofegghatched -= 1
+
         elif gameinput == '2':
-            if userhatchspeedlevel < 15:
-                userhatchspeedlevel += 1
-                hatchspeedcost = userhatchspeedlevel ** 2 + userhatchspeedlevel * 3
-                localinput = input(f'Would you like to upgrade hatchspeed, Cost is {hatchspeedcost}. (y/n) ')
-                if localinput.lower() == 'y':
+            if userhatchspeedlevel < 35:
+                nextlevel =  userhatchspeedlevel + 1
+                hatchspeedcost = nextlevel ** 2 + nextlevel * 3
+                localinput = input(f'Would you like to upgrade hatchspeed, Your current level is {userhatchspeedlevel}, Cost is {hatchspeedcost}. (y/n) ')
+                if localinput.lower() == 'y' and money > hatchspeedcost:
+                    userhatchspeedlevel = nextlevel
                     money -= hatchspeedcost
                     hatchspeedlevel += 0.1
                     negtivehatchspeedlevel = hatchspeedlevel * -1
@@ -97,6 +112,10 @@ def loops():
                 print(f'{cancel_delete} is no longer marked for auto-delete.')
             else:
                 print(f'{cancel_delete} was not in auto-delete.')
+        elif gameinput == '8' or 'quit' or 'Quit':
+            print('Quitting The Process.')
+            time.sleep(0.3)
+            money = -1
 
 
 def commonegg():
@@ -148,6 +167,38 @@ def uncommonegg():
         money += UNCOMMONPET_PAYMENT[4]
     print(f'After pet pet payments your money is {money}!')
     print('')
+
+def diamondegg():
+    global pets
+    global money
+    money -= 100
+    print("This egg cost 100 Money's")
+    print('Hatching diamond egg')
+    hatched_item = random.choices(DIAMONDEGG_OUTCOMES, weights=DIAMONDEGG_WEIGHT, k=1)[0]
+    print(f"You hatched: {hatched_item}")
+    pets.append(hatched_item)  # Use .append() for adding a single item
+    print("Your current pets:", ', '.join(pets))  # Print without brackets
+    if hatched_item == 'Diamond Dog':
+        money += DIAMONDEG_PAYMENT[0]
+    elif hatched_item == 'Diamond Rabbit':
+        money += DIAMONDEG_PAYMENT[1]
+    elif hatched_item == 'Diamond Bunny':
+        money += DIAMONDEG_PAYMENT[2]
+    elif hatched_item == 'Diamond Wolf':
+        money += DIAMONDEG_PAYMENT[3]
+    elif hatched_item == 'Diamond Hex':
+        money += DIAMONDEG_PAYMENT[4]
+    elif hatched_item == 'Diamond Dogcat':
+        money += DIAMONDEG_PAYMENT[5]
+    elif hatched_item == 'Diamond Prism':
+        money += DIAMONDEG_PAYMENT[6]
+    elif hatched_item == 'Diamond Ring':
+        money += DIAMONDEG_PAYMENT[7]
+    elif hatched_item == 'Apex Diamond':
+        money += DIAMONDEG_PAYMENT[8]
+    print(f'After pet pet payments your money is {money}!')
+    print('')
+
 while money >= 0:
     while any(pet in pets for pet in autodelete_list):  # Keep running until all auto-delete pets are gone
         for pet in autodelete_list[:]:
