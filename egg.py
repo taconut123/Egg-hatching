@@ -2,7 +2,7 @@ import random
 import time
 import math
 
-money = 50000
+money = 50
 print(f'Welcome to the egg hatching simulator, you start with {money} dollars!')
 pets = []
 autodelete_list = []
