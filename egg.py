@@ -7,11 +7,12 @@ total_egg_hatched = 0
 userhatchspeedlevel = 0
 hatchspeedlevel = 1
 hatchspeed = 1
+luck = 1
 print(f'Welcome to the egg hatching simulator, you start with {money} dollars!')
 pets = []
 autodelete_list = []
-COMMONEGG_OUTCOMES = ['Sad bunny','Cat', 'Dog', 'Very Happy bunny', 'Fox','Dogcat']
-COMMONEGG_WEIGHT = [50,30,10,5,3,2]
+common_pets = ['Sad bunny','Cat', 'Dog', 'Very Happy bunny', 'Fox','Dogcat']
+common_weight = [50,30,10,5,3,2]
 
 UNCOMMONEGG_OUTCOMES = ['Rabbit', 'Wolf','Bloodhound', 'Red Panda', 'Rubicon']
 UNCOMMONEGG_WEIGHT = [40,32,16,11.999,0.001]
@@ -124,25 +125,51 @@ def commonegg():
     money -= 2
     print("This egg cost 2 Money's")
     print('Hatching common egg')
-    hatched_item = random.choices(COMMONEGG_OUTCOMES, weights=COMMONEGG_WEIGHT, k=1)[0]
+    previous_lucky_weight = 0
+    lucky_weight = []
+    for weight in common_weight:
+        current_lucky_weight = weight * luck
+        cumulative_lucky_weight = current_lucky_weight + previous_lucky_weight
+        lucky_weight.append(cumulative_lucky_weight)
+        previous_lucky_weight = cumulative_lucky_weight
 
-    print(f"You hatched: {hatched_item}")
-    pets.append(hatched_item)  # Use .append() for adding a single item
-    print("Your current pets:", ', '.join(pets))  # Print without brackets
-    if hatched_item == 'Sad bunny':
+    print(lucky_weight)
+    large_number = max(lucky_weight)
+    smallest_number = min(lucky_weight)
+    print(common_weight)
+
+    test = random.uniform(smallest_number, large_number)
+    print(f'Your odds are')
+    print(test)
+    if test > lucky_weight[0]:
+        pets.append(common_pets[0])
         money += COMMONPET_PAYMENT[0]
-    elif hatched_item == 'Cat':
+
+    elif lucky_weight[0] < test > lucky_weight[1]:
+        pets.append(common_pets[1])
         money += COMMONPET_PAYMENT[1]
-    elif hatched_item == 'Dog':
+
+    elif lucky_weight[1] < test > lucky_weight[2]:
+        pets.append(common_pets[2])
         money += COMMONPET_PAYMENT[2]
-    elif hatched_item == 'Very Happy bunny':
+
+    elif lucky_weight[2] < test > lucky_weight[3]:
+        pets.append(common_pets[3])
         money += COMMONPET_PAYMENT[3]
-    elif hatched_item == 'Fox':
+
+    elif lucky_weight[3] < test > lucky_weight[4]:
+        pets.append(common_pets[4])
         money += COMMONPET_PAYMENT[4]
-    elif hatched_item == 'Dogcat':
+
+    elif lucky_weight[4] < test > lucky_weight[5]:
+        pets.append(common_pets[5])
         money += COMMONPET_PAYMENT[5]
-    print(f'After pet payments your money is {money}!')
-    print('')
+
+    elif lucky_weight[5] < test > lucky_weight[6]:
+        pets.append(common_pets[6])
+        money += COMMONPET_PAYMENT[6]
+
+    print(pets)
 
 def uncommonegg():
     global pets
