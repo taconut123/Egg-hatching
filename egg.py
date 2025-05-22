@@ -1,209 +1,322 @@
 import random
+import threading
 import time
-import math
 
-money = 500 #remember to change this
-total_egg_hatched = 0
-userhatchspeedlevel = 0
-hatchspeedlevel = 1
-hatchspeed = 1
-print(f'Welcome to the egg hatching simulator, you start with {money} dollars!')
-pets = []
+Cash: int = 1_000_000_000_000
+current_luck = 0
+MainGameInput: str = ''
+pets: list = []
+petsvalue: dict = {'dog': 2, 'cat': 3, 'bird': 5}
+potionactive = False
 autodelete_list = []
-COMMONEGG_OUTCOMES = ['Sad bunny','Cat', 'Dog', 'Very Happy bunny', 'Fox','Dogcat']
-COMMONEGG_WEIGHT = [50,30,10,5,3,2]
+Eggwantinghatched = None
+settingconfirmpets = True
+userhatchspeedlevel = 0
+base_hatch_time = 1.0
+speed_increase_per_level = 0.05
+hatchspeed = 1
 
-UNCOMMONEGG_OUTCOMES = ['Rabbit', 'Wolf','Bloodhound', 'Red Panda', 'Rubicon']
-UNCOMMONEGG_WEIGHT = [40,32,16,11.999,0.001]
+def luckpotionend():
+    global current_luck
+    global potionactive
+    print('')
+    print('!!!YOUR POTION HAS ENDED!!!')
+    current_luck = 0
+    potionactive = False
 
-DIAMONDEGG_OUTCOMES = ['Diamond Dog','Diamond Rabbit','Diamond Bunny','Diamond Wolf','Diamond Hex','Diamond Dogcat','Diamond Prism','Diamond Ring','Apex Diamond']
-DIAMONDEGG_WEIGHT = [26,25,25,23.8389,0.1,0.05,0.01,0.001,0.0001]
 
-COMMONPET_PAYMENT = [1,3,6,12,24,64]
-UNCOMMONPET_PAYMENT = [9,11,16,36,100000]
-DIAMONDEGG_PAYMENT = [53,53,55,56,9000,10000,10000,40000, 50000000 ]
-def loops():
-        global money
-        global total_egg_hatched
-        global userhatchspeedlevel
-        global hatchspeedlevel
-        global hatchspeed
-        print('1. Look at eggs!')
-        print('2. Shop')
-        print('3. Stats')
-        print('4. Inventory')
-        print('5. Adoption')
-        print('6. Add Pet to Auto-Delete')
-        print('7. Remove Pet from Auto-Delete')
-        print('8. Quit')
-        gameinput = input('Which of the following would you like to do! ')
+def mainloop():
+    global Cash
+    global current_luck
+    global MainGameInput
+    global pets
+    global petsvalue
+    global potionactive
+    global autodelete_list
+    global Eggwantinghatched
+    global settingconfirmpets
+    global userhatchspeedlevel
+    global base_hatch_time
+    global hatchspeed
+    global speed_increase_per_level
+
+    print('1. Hatch eggs')
+    print('2. Sell Pets')
+    print('3. Shop')
+    print('4. Pets!')
+    print('5. Put Pet up for auto-delete.')
+    print('6. Remove pet from auto-delete')
+    print('7. Settings')
+    try:
+        MainGameInput = input('What do you want to do! ')
+    except ValueError:
+        print('Something went wrong please try agian')
+    if MainGameInput == '1':
         print('')
-        if gameinput == '1':
-            print('1. Common egg (Cost: 2)')
-            print('2. Uncommon egg (Cost: 10)')
-            print('3. Diamond egg (Cost: 100)')
-            egginput = input('Which egg would you like to hatch? ')
-            if egginput == '1' and money >= 2 :
-                amountofeggshatched = int(input(f'How many eggs would you like to hatch? Your Hatch speed is {hatchspeed}, and you have {money} dollars! '))
-                total_egg_hatched += amountofeggshatched
-                while amountofeggshatched > 0:
-                    commonegg()
-                    time.sleep(hatchspeed)
-                    amountofeggshatched -= 1
-            else:
-                print('You did not have enough money to hatch!')
-            if egginput == '2':
-                amountofeggshatched = int(input(f'How many eggs would you like to hatch? Your Hatch speed is {hatchspeed}, and you have {money} dollars! '))
-                total_egg_hatched += amountofeggshatched
-                while amountofeggshatched > 0:
-                    uncommonegg()
-                    time.sleep(hatchspeed)
-                    amountofeggshatched -= 1
-            if egginput == '3' and money >= 100:
-                amountofegghatched = int(input(f'How many eggs would you like to hatch? Your Hatch speed is {hatchspeed}, and you have {money} dollars! '))
-                total_egg_hatched += amountofegghatched
-                while amountofegghatched > 0:
-                    diamondegg()
-                    time.sleep(hatchspeed)
-                    amountofegghatched -= 1
+        print('1. Common Egg: 2 Cash')
+        print('2. Rare Egg: 5 Cash')
+        print('3. Diamond Egg: 10 Cash')
+        userwantegg: str = input('Which egg do you want to hatch ')
+        if userwantegg == '1':
+            Eggwantinghatched = 'Common egg'
+            print(f'Egg hatching: {Eggwantinghatched}')
+        elif userwantegg == '2':
+            Eggwantinghatched = 'Rare Egg'
+            print(f'Egg hatching: {Eggwantinghatched}')
+        elif userwantegg == '3':
+            Eggwantinghatched = 'Diamond Egg'
+            print(f'Egg hatching: {Eggwantinghatched}')
 
-        elif gameinput == '2':
-            if userhatchspeedlevel < 35:
+    elif MainGameInput == '2':
+        print('')
+
+        usersellingpet = input('Which pet do you want to sell: ')
+        if usersellingpet not in pets:
+            print('That is not a pet or you dont own it')
+            return
+        else:
+            try:
+                sell_amount = petsvalue[usersellingpet]
+            except KeyError:
+                print(
+                    'Something went wrong please try agian with a pet in your'
+                    ' inventory!'
+                )
+                return
+            print(f'The pet your selling is worth {sell_amount} Cash.')
+            if settingconfirmpets is True:
+                areyousure = input('Are you sure you want to sell this pet? (y/n) ')
+                if (
+                    usersellingpet in pets
+                    and usersellingpet in petsvalue
+                    and areyousure == 'y'
+                ):
+                    sell_amount = petsvalue[usersellingpet]
+                    print(sell_amount)
+                    Cash += sell_amount
+                    print(f'Your Cash is now {Cash}')
+                    pets.remove(usersellingpet)
+                    print(pets)
+                else:
+                    print('You ethier dont own the pet your trying to sell or it does not have a value or you said No to the are you sure question' )
+            elif settingconfirmpets is False:
+                if usersellingpet in pets and usersellingpet in petsvalue:
+                    sell_amount = petsvalue[usersellingpet]
+                    print(sell_amount)
+                    Cash += sell_amount
+                    print(f'Your Cash is now: {Cash}')
+                    pets.remove(usersellingpet)
+                    print(pets)
+    if MainGameInput == '3':
+        print('1. Hatch Speed Upgrades')
+        print('2. Potion upgrades')
+        try:
+            shopinput = input('What thing do you want to do in the shop: ')
+        except ValueError:
+            return
+        if shopinput == '1':
+            if userhatchspeedlevel < 19:
                 nextlevel =  userhatchspeedlevel + 1
                 hatchspeedcost = nextlevel ** 2 + nextlevel * 3
                 localinput = input(f'Would you like to upgrade hatchspeed, Your current level is {userhatchspeedlevel}, Cost is {hatchspeedcost}. (y/n) ')
-                if localinput.lower() == 'y' and money > hatchspeedcost:
-                    userhatchspeedlevel = nextlevel
-                    money -= hatchspeedcost
-                    hatchspeedlevel += 0.1
-                    negtivehatchspeedlevel = hatchspeedlevel * -1
-                    hatchspeed = round(math.pow(hatchspeedlevel, negtivehatchspeedlevel),2)
-                    print(f'Your Hatch speed level is now {userhatchspeedlevel}')
-                    print(f'It now takes {hatchspeed} seconds to hatch.')
+                if localinput.lower() == 'y' and Cash > hatchspeedcost:
+                  Cash -= hatchspeedcost
+                  userhatchspeedlevel += 1
+                  hatchspeed = base_hatch_time - (userhatchspeedlevel * speed_increase_per_level)
+                  hatchspeed = max(hatchspeed, 0.05)
+                  print(f'You upgraded your hatchspeed:{hatchspeed} seconds now!')
                 elif localinput.lower() == 'n':
                     print('Thank you for coming to the shop!')
+            elif userhatchspeedlevel >= 19:
+                print('You can not have a hatch level over 19.')
+        elif shopinput == '2' and not potionactive:
+            print(f'Current Luck Level is {current_luck}')
+            print('1. Potion Level 1, +1 Luck level for 2 minutes: 5 Cash')
+            print('2. Potion Level 2, +2 Luck level for 3 minutes: 7 Cash')
+            print('3. Potion Level 3, +3 Luck level for 5 minutes: 10 Cash')
+            print('4. Potion Level 4, +4 Luck level for 6 minutes: 12 Cash')
+            print('5. Potion Level 5, +5 Luck level for 7 minutes: 15 Cash')
+            print('6. Potion Level 5, +6 Luck level for 8 minutes: 20 Cash')
+
+            potionbuying = input('What Potion do you want to buy ')
+            if potionbuying == '1' and Cash > 5:
+                print('You bought a potion')
+                Cash -= 5
+                potionactive = True
+                current_luck += 1
+                timer = threading.Timer(60 * 2, luckpotionend)
+                timer.start()
+            elif potionbuying == '2' and Cash > 7:
+                print('You bought a potion')
+                Cash -= 7
+                potionactive = True
+                current_luck += 2
+                timer = threading.Timer(60 * 3, luckpotionend)
+                timer.start()
+            elif potionbuying == '3' and Cash > 10:
+                print('You bought a potion')
+                Cash -= 10
+                potionactive = True
+                current_luck += 3
+                timer = threading.Timer(60 * 5, luckpotionend)
+                timer.start()
+            elif potionbuying == '4' and Cash > 12:
+                print('You bought a potion')
+                Cash -= 12
+                potionactive = True
+                current_luck += 4
+                timer = threading.Timer(60 * 6, luckpotionend)
+                timer.start()
+            elif potionbuying == '5' and Cash > 15:
+                print('You bought a potion')
+                Cash -= 15
+                potionactive = True
+                current_luck += 5
+                timer = threading.Timer(60 * 7, luckpotionend)
+                timer.start()
+            elif potionbuying == '6' and Cash > 20:
+                print('You bought a potion')
+                Cash -= 20
+                potionactive = True
+                current_luck += 6
+                timer = threading.Timer(60 * 8, luckpotionend)
+                timer.start()
             else:
-                print('You can not have a hatch level over 15.')
+                print('Not valid input!')
+        else:
+            print('You have a potion active!')
+    if MainGameInput == '4':
+        print(f'Your pets are {pets}')
+    elif MainGameInput == '5':  # Add pet to auto-delete
+        autodelete = input(
+            'Which pet would you like to put up for auto-delete? '
+        )
+        if autodelete in pets:
+            autodelete_list.append(autodelete)
+            print(f'{autodelete} marked for auto-delete.')
+        else:
+            print(f'{autodelete} is not in your inventory.')
+    elif MainGameInput == '6':
+        cancel_delete = input(
+            'Which pet would you like to remove from auto-delete? '
+        )
+        if cancel_delete in autodelete_list:
+            autodelete_list.remove(cancel_delete)
+            print(f'{cancel_delete} is no longer marked for auto-delete.')
+        else:
+            print(f'{cancel_delete} was not in auto-delete.')
+    elif MainGameInput == '7':
+        print('1. Turn off confirm for selling pets')
+        try:
+            setting = input('Put the number of the setting you want to change, if you would like to exit type a letter ')
+        except ValueError:
+            print('exiting settings')
+        if setting == '1':
+            print('Setting Confirm pets sell to off')
+            settingconfirmpets = False
 
-        elif gameinput == '3':
-            print(f'Your current egg count is: {total_egg_hatched}!')
-            print(f'Current hatch speed is: {hatchspeed}!')
-        elif gameinput == '4':
-            print(*pets)
-        elif gameinput == '5':
-            adopt = input('Which pet would you like to put up for adoption? ')
-            if adopt in pets:
-                pets.remove(adopt)
-                print(pets)
-            else:
-                print('No puedes dar en adopción una mascota que no tienes')
-        elif gameinput == '6':  # Add pet to auto-delete
-            autodelete = input('Which pet would you like to put up for auto-delete? ')
-            if autodelete in pets:
-                autodelete_list.append(autodelete)
-                print(f'{autodelete} marked for auto-delete.')
-            else:
-                print(f'{autodelete} is not in your inventory.')
 
-        elif gameinput == '7':  # Remove pet from auto-delete
-            cancel_delete = input('Which pet would you like to remove from auto-delete? ')
-            if cancel_delete in autodelete_list:
-                autodelete_list.remove(cancel_delete)
-                print(f'{cancel_delete} is no longer marked for auto-delete.')
-            else:
-                print(f'{cancel_delete} was not in auto-delete.')
-        elif gameinput == '8' or 'quit' or 'Quit':
-            print('Quitting The Process.')
-            time.sleep(0.3)
-            money = -1
-
-
-def commonegg():
-    global pets
-    global money
-    money -= 2
-    print("This egg cost 2 Money's")
-    print('Hatching common egg')
-    hatched_item = random.choices(COMMONEGG_OUTCOMES, weights=COMMONEGG_WEIGHT, k=1)[0]
-
-    print(f"You hatched: {hatched_item}")
-    pets.append(hatched_item)  # Use .append() for adding a single item
-    print("Your current pets:", ', '.join(pets))  # Print without brackets
-    if hatched_item == 'Sad bunny':
-        money += COMMONPET_PAYMENT[0]
-    elif hatched_item == 'Cat':
-        money += COMMONPET_PAYMENT[1]
-    elif hatched_item == 'Dog':
-        money += COMMONPET_PAYMENT[2]
-    elif hatched_item == 'Very Happy bunny':
-        money += COMMONPET_PAYMENT[3]
-    elif hatched_item == 'Fox':
-        money += COMMONPET_PAYMENT[4]
-    elif hatched_item == 'Dogcat':
-        money += COMMONPET_PAYMENT[5]
-    print(f'After pet payments your money is {money}!')
+def eggsystem():
+    global Cash
+    global current_luck
+    global Eggwantinghatched
+    global hatchspeed
+    global speed_increase_per_level
+    global base_hatch_time
     print('')
+#IF SOMETHING HAS A _ YOU CHANGE THAT TO YOUR NAME OF EGG OR YOUR NUMBER (NUMBER IN CASE OF THE CASH)
+#TO ADD A NEW EGG, JUST GO TO MAINGAININPUT, THEN PRINT A NUMBER THAN THE NAME OF YOUR EGG, ELIF USER WANTS YOUR NUMBER, 
+# IF SO THAN MAKE THE Eggwantinghatched to Eggwantinghatched == 'YOUR_REAL_EGG_NAME_HERE':
+# and then come to here and do if Eggwantinghatched == 'YOUR REAL EGG NAME HERE', Then ident, The have your odds for your egg in a list,
+# and your pet names in a list with strings with commas inbetween egg names then do usingodds = the_name_of_your_odds_list, 
+# and usingpets = the_name_of_your_pets_list
+# !!!BUT THE LIST SHOULD HAVE THE SAME AMOUNT OF PETS AND ODDS TO KEEP FROM BREAKING THE SYSTEM!!!!
+# Also if you want the egg to cost cash than add cost = amount_of_cash_you_want_to_charge
+    ######################
+    if Eggwantinghatched == 'Common egg':
+        commonodds = [50, 40, 10, 1]
+        commonpets = ['dog', 'cat', 'bird', 'elephant']
+        usingodds = commonodds
+        usingpets = commonpets
+        cost = 3
+    ######################
+    if Eggwantinghatched == 'Rare Egg':
+        rareodds = [90, 9, 0.9, 0.1]
+        rarepets = ['Panda', 'Coyote', 'Giraff', 'Dogcat']
+        usingodds = rareodds
+        usingpets = rarepets
+        cost = 5
+    ######################
+    if Eggwantinghatched == 'Diamond Egg':
+        diamondodds = [26,25,25,23.8389,0.1,0.05,0.01,0.001,0.0001]
+        diamondpets = ['Diamond Dog','Diamond Rabbit','Diamond Bunny','Diamond Wolf','Diamond Hex','Diamond Dogcat','Diamond Prism','Diamond Ring','Apex Diamond']
+        usingodds = diamondodds
+        usingpets = diamondpets
+        cost = 10
+    lucky_weights = []
+    bump_map = {
+        6: 0.11,  # luck=6 → 10% per point
+        5: 0.10,  # luck=5 → 15% per point
+        4: 0.09,  # luck=4 → 16% per point
+        3: 0.08,  # luck=3 → 25% per point
+        2: 0.07,
+        1: 0.06,
+        0: 0.05,
+    }
+    if Eggwantinghatched != None:
+        for i in range(len(usingodds)):
+            value = usingodds[i]
+            bump = bump_map[current_luck]
+            if value <= 10:
+                factor = 1 + current_luck * bump
+            else:
+                factor = 1
+            lucky_weights.append(value * factor)
+        print(f'lucky_weights: {lucky_weights}')
+        totalweight = sum(lucky_weights)
+        try:
+            amountsofeggwantinghatched = int(
+                input('How many eggs do you want to hatch! ')
+            )
+        except ValueError:
+            print('Not a valid input!')
+            Eggwantinghatched = ''
+            return
+        
 
-def uncommonegg():
-    global pets
-    global money
-    money -= 10
-    print("This egg cost 10 Money's")
-    print('Hatching uncommon egg')
-    hatched_item = random.choices(UNCOMMONEGG_OUTCOMES, weights=UNCOMMONEGG_WEIGHT, k=1)[0]
+        while amountsofeggwantinghatched > 0:
+            if Cash >= (cost + 1):
+                Cash -= cost
+                cumulative = 0
+                eggroll = random.uniform(0, totalweight)
+                for i in range(len(lucky_weights)):
+                    cumulative += lucky_weights[i]
+                    if eggroll < cumulative:
+                        hatched = usingpets[i]
+                        break
+                amountsofeggwantinghatched -= 1
+                if hatched in autodelete_list:
+                    print(f'The pet you hatched:{hatched} is in auto delete, it will not be given')
+                else:
+                    pets.append(hatched)
+                    print(f'You hatched {hatched}.')
+                    time.sleep(hatchspeed)
+            else:
+                print('Your out of Cash please sell pets to make more!')
+                break
 
-    print(f"You hatched: {hatched_item}")
-    pets.append(hatched_item)  # Use .append() for adding a single item
-    print("Your current pets:", ', '.join(pets))  # Print without brackets
-    if hatched_item == 'Rabbit':
-        money += UNCOMMONPET_PAYMENT[0]
-    elif hatched_item == 'Wolf':
-        money += UNCOMMONPET_PAYMENT[1]
-    elif hatched_item == 'Bloodhound':
-        money += UNCOMMONPET_PAYMENT[2]
-    elif hatched_item == 'Red Panda':
-        money += UNCOMMONPET_PAYMENT[3]
-    elif hatched_item == 'Rubicon':
-        money += UNCOMMONPET_PAYMENT[4]
-    print(f'After pet pet payments your money is {money}!')
-    print('')
+    Eggwantinghatched = None
 
-def diamondegg():
-    global pets
-    global money
-    money -= 100
-    print("This egg cost 100 Money's")
-    print('Hatching diamond egg')
-    hatched_item = random.choices(DIAMONDEGG_OUTCOMES, weights=DIAMONDEGG_WEIGHT, k=1)[0]
-    print(f"You hatched: {hatched_item}")
-    pets.append(hatched_item)  # Use .append() for adding a single item
-    print("Your current pets:", ', '.join(pets))  # Print without brackets
-    if hatched_item == 'Diamond Dog':
-        money += DIAMONDEG_PAYMENT[0]
-    elif hatched_item == 'Diamond Rabbit':
-        money += DIAMONDEG_PAYMENT[1]
-    elif hatched_item == 'Diamond Bunny':
-        money += DIAMONDEG_PAYMENT[2]
-    elif hatched_item == 'Diamond Wolf':
-        money += DIAMONDEG_PAYMENT[3]
-    elif hatched_item == 'Diamond Hex':
-        money += DIAMONDEG_PAYMENT[4]
-    elif hatched_item == 'Diamond Dogcat':
-        money += DIAMONDEG_PAYMENT[5]
-    elif hatched_item == 'Diamond Prism':
-        money += DIAMONDEG_PAYMENT[6]
-    elif hatched_item == 'Diamond Ring':
-        money += DIAMONDEG_PAYMENT[7]
-    elif hatched_item == 'Apex Diamond':
-        money += DIAMONDEG_PAYMENT[8]
-    print(f'After pet pet payments your money is {money}!')
-    print('')
 
-while money >= 0:
-    while any(pet in pets for pet in autodelete_list):  # Keep running until all auto-delete pets are gone
+while Cash >= 0:
+    while any(
+        pet in pets for pet in autodelete_list
+    ):  # Keep running until all auto-delete pets are gone
         for pet in autodelete_list[:]:
             if pet in pets:
                 pets.remove(pet)
                 print(f'{pet} was automatically removed.')
-    time.sleep(0.3)
-    loops()
+                
+    mainloop()
+    if Eggwantinghatched != '':
+        eggsystem()
